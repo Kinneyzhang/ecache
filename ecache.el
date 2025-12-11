@@ -8,6 +8,9 @@
 ;; Keywords: cache, storage, performance
 ;; URL: https://github.com/Kinneyzhang/ecache
 
+;; Note: Database cache backend requires Emacs 29.1+ with SQLite support.
+;; All other features work with Emacs 26.1+.
+
 ;; This file is not part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -256,8 +259,13 @@ nil means no auto-save."
 ;;; File-Based Cache
 
 (defun ecache--file-cache-path (key)
-  "Return file path for cache KEY."
-  (expand-file-name (secure-hash 'sha256 key) ecache-directory))
+  "Return file path for cache KEY.
+Uses SHA256 hash of key to create a safe filename."
+  (unless (stringp key)
+    (error "Cache key must be a string"))
+  (when (string-empty-p key)
+    (error "Cache key cannot be empty"))
+  (expand-file-name (concat "ecache-" (secure-hash 'sha256 key)) ecache-directory))
 
 (defun ecache-set-file (key value &optional ttl)
   "Set KEY to VALUE in file-based cache with optional TTL."
@@ -296,9 +304,10 @@ nil means no auto-save."
       (delete-file file))))
 
 (defun ecache-clear-file ()
-  "Clear all entries in file-based cache."
+  "Clear all entries in file-based cache.
+Only deletes files that match the ecache file naming pattern."
   (when (file-exists-p ecache-directory)
-    (dolist (file (directory-files ecache-directory t "^[^.]"))
+    (dolist (file (directory-files ecache-directory t "^ecache-[0-9a-f]\\{64\\}$"))
       (when (file-regular-p file)
         (delete-file file)))))
 
@@ -306,28 +315,31 @@ nil means no auto-save."
   "Return list of all keys in file-based cache."
   (when (file-exists-p ecache-directory)
     (let (keys)
-      (dolist (file (directory-files ecache-directory t "^[^.]"))
+      (dolist (file (directory-files ecache-directory t "^ecache-[0-9a-f]\\{64\\}$"))
         (when (file-regular-p file)
-          (let* ((data (with-temp-buffer
-                         (insert-file-contents file)
-                         (ecache--deserialize (buffer-string))))
-                 (key (plist-get data :key)))
+          (let* ((data (condition-case nil
+                           (with-temp-buffer
+                             (insert-file-contents file)
+                             (ecache--deserialize (buffer-string)))
+                         (error nil)))
+                 (key (when data (plist-get data :key))))
             (when key
               (push key keys)))))
       keys)))
 
 ;;; Database Cache (SQLite)
 
-(defvar ecache--db-available nil
-  "Whether SQLite support is available.")
+(defvar ecache--db-available 'unknown
+  "Whether SQLite support is available.
+Value can be 'unknown, t, or nil.")
 
 (defun ecache--db-available-p ()
   "Check if SQLite support is available."
-  (if (boundp 'ecache--db-available)
-      ecache--db-available
+  (when (eq ecache--db-available 'unknown)
     (setq ecache--db-available
           (and (fboundp 'sqlite-available-p)
-               (sqlite-available-p)))))
+               (sqlite-available-p))))
+  ecache--db-available)
 
 (defvar ecache--db-connection nil
   "SQLite database connection.")

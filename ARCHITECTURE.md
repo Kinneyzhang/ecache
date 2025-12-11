@@ -25,7 +25,8 @@ ecache is designed as a universal caching system for Emacs, providing multiple s
 #### File-Based Cache
 - **Implementation**: Individual files in `ecache-directory`
 - **Storage Format**: Serialized Lisp data (using `prin1-to-string`)
-- **File Naming**: SHA256 hash of the key
+- **File Naming**: `ecache-` prefix + SHA256 hash of the key (64 hex characters)
+- **Pattern Matching**: `^ecache-[0-9a-f]{64}$` for safe cleanup operations
 - **Advantages**: Persistent across restarts, simple implementation
 - **Disadvantages**: One file per entry (potential filesystem limits)
 

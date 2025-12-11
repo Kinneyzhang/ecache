@@ -37,9 +37,10 @@
 (ert-deftest ecache-test-memory-ttl ()
   "Test memory cache with TTL."
   (ecache-clear-memory)
-  (ecache-set-memory "ttl-key" "value" 1)
+  ;; Set a very short TTL for faster testing
+  (ecache-set-memory "ttl-key" "value" 0.5)
   (should (equal "value" (ecache-get-memory "ttl-key")))
-  (sleep-for 2)
+  (sleep-for 1)
   (should (null (ecache-get-memory "ttl-key"))))
 
 (ert-deftest ecache-test-memory-types ()
@@ -127,9 +128,10 @@
 (ert-deftest ecache-test-file-ttl ()
   "Test file cache with TTL."
   (ecache-clear-file)
-  (ecache-set-file "ttl-key" "value" 1)
+  ;; Set a very short TTL for faster testing
+  (ecache-set-file "ttl-key" "value" 0.5)
   (should (equal "value" (ecache-get-file "ttl-key")))
-  (sleep-for 2)
+  (sleep-for 1)
   (should (null (ecache-get-file "ttl-key"))))
 
 (ert-deftest ecache-test-file-types ()
@@ -171,9 +173,10 @@
 (ert-deftest ecache-test-unified-api-ttl ()
   "Test unified API with TTL."
   (ecache-clear :backend 'memory)
-  (ecache-set "ttl-key" "value" :ttl 1)
+  ;; Set a very short TTL for faster testing
+  (ecache-set "ttl-key" "value" :ttl 0.5)
   (should (equal "value" (ecache-get "ttl-key")))
-  (sleep-for 2)
+  (sleep-for 1)
   (should (null (ecache-get "ttl-key"))))
 
 (ert-deftest ecache-test-unified-api-default ()
