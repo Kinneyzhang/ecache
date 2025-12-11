@@ -1,0 +1,24 @@
+# Emacs cache directory (created by ecache)
+/ecache/
+
+# Emacs backup files
+*~
+\#*\#
+.\#*
+
+# Byte-compiled files
+*.elc
+
+# Package files
+*.tar
+dist/
+
+# Test coverage
+coverage/
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.tmp
+/tmp/
