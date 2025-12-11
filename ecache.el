@@ -110,6 +110,10 @@ nil means no auto-save."
 
 ;;; Internal Variables
 
+(defconst ecache--file-cache-pattern "^ecache-[0-9a-f]\\{64\\}$"
+  "Regular expression pattern for cache file names.
+Cache files are named 'ecache-' followed by a 64-character SHA256 hash.")
+
 (defvar ecache--global-cache (make-hash-table :test 'equal)
   "Global in-memory cache hash table.")
 
@@ -307,7 +311,7 @@ Uses SHA256 hash of key to create a safe filename."
   "Clear all entries in file-based cache.
 Only deletes files that match the ecache file naming pattern."
   (when (file-exists-p ecache-directory)
-    (dolist (file (directory-files ecache-directory t "^ecache-[0-9a-f]\\{64\\}$"))
+    (dolist (file (directory-files ecache-directory t ecache--file-cache-pattern))
       (when (file-regular-p file)
         (delete-file file)))))
 
@@ -315,7 +319,7 @@ Only deletes files that match the ecache file naming pattern."
   "Return list of all keys in file-based cache."
   (when (file-exists-p ecache-directory)
     (let (keys)
-      (dolist (file (directory-files ecache-directory t "^ecache-[0-9a-f]\\{64\\}$"))
+      (dolist (file (directory-files ecache-directory t ecache--file-cache-pattern))
         (when (file-regular-p file)
           (let* ((data (condition-case nil
                            (with-temp-buffer
